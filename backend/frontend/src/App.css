@@ -1,0 +1,90 @@
+body{
+font-family: Arial;
+margin:0;
+background:#f4f6fb;
+}
+
+/* Login */
+
+.login-container{
+height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+background:linear-gradient(to right,#1e90ff,#00c6ff);
+}
+
+.login-box{
+background:white;
+padding:40px;
+border-radius:10px;
+width:300px;
+text-align:center;
+box-shadow:0 0 20px rgba(0,0,0,0.2);
+}
+
+input{
+width:100%;
+padding:10px;
+margin:10px 0;
+border-radius:5px;
+border:1px solid #ccc;
+}
+
+button{
+padding:10px;
+margin:10px;
+border:none;
+background:#1e90ff;
+color:white;
+cursor:pointer;
+border-radius:5px;
+}
+
+/* Dashboard */
+
+.header{
+background:#1e90ff;
+color:white;
+padding:20px;
+}
+
+.card-grid{
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:20px;
+padding:30px;
+}
+
+.card{
+background:white;
+padding:40px;
+text-align:center;
+text-decoration:none;
+color:black;
+border-radius:10px;
+box-shadow:0 0 10px #ccc;
+transition:0.3s;
+}
+
+.card:hover{
+transform:scale(1.05);
+background:#e91eff;
+color:white;
+}.prediction{
+padding:30px;
+}
+
+.input-grid{
+display:grid;
+grid-template-columns:repeat(2,1fr);
+gap:20px;
+margin:20px 0;
+}
+
+.result{
+background:white;
+padding:20px;
+margin-top:20px;
+box-shadow:0 0 10px #ccc;
+}
