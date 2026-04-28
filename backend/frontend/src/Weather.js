@@ -7,7 +7,7 @@ const [data,setData] = useState(null)
 
 useEffect(()=>{
 
-axios.get("https://smart-irrigation-system-3-ny8u.onrender.com")
+axios.get("http://127.0.0.1:5000/data")
 .then(res=>setData(res.data))
 .catch(err=>console.log(err))
 
