@@ -19,7 +19,7 @@ return ()=>clearInterval(interval)
 
 const fetchGraph = ()=>{
 
-axios.get("http://127.0.0.1:5000/graph")
+axios.get("https://smart-irrigation-system-3-ny8u.onrender.com/static/graph")
 .then(res=>{
 
 setImg(res.data.graph + "?t=" + new Date().getTime())

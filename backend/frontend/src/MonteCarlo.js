@@ -43,7 +43,7 @@ function MonteCarlo() {
         )}
 
         <img
-          src="http://127.0.0.1:5000/static/live_graph.png"
+          src="https://smart-irrigation-system-3-ny8u.onrender.com/static/live_graph.png"
           alt="graph"
           className="img-fluid mt-4 rounded"
         />

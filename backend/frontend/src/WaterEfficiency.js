@@ -6,7 +6,7 @@ function WaterEfficiency() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("http://127.0.0.1:5000/data")
+    fetch("https://smart-irrigation-system-3-ny8u.onrender.com/WaterEfficiency")
       .then((res) => res.json())
       .then((data) => {
         setWue(data.water_use_efficiency);
