@@ -22,6 +22,9 @@ from processing.novelty_engine import smart_novelty_system
 app = Flask(__name__)
 CORS(app)
 
+# Backend URL
+BASE_URL = "https://smart-irrigation-system-3-ny8u.onrender.com"
+
 # Start TTN Cloud
 try:
     start_ttn()
@@ -36,29 +39,16 @@ def home():
 
 @app.route("/data")
 def get_data():
-
     try:
-        # ---------------------------
-        # Get Live Data
-        # ---------------------------
         ttn = get_ttn_data()
         flow = get_flownex_data()
         weather = get_weather()
 
-        # ---------------------------
-        # Default Values
-        # ---------------------------
         if not ttn:
-            ttn = {
-                "soil_moisture": 45,
-                "temperature": 30
-            }
+            ttn = {"soil_moisture": 45, "temperature": 30}
 
         if not flow:
-            flow = {
-                "flow_rate": 18,
-                "pressure": 2.5
-            }
+            flow = {"flow_rate": 18, "pressure": 2.5}
 
         if not weather:
             weather = {
@@ -67,125 +57,68 @@ def get_data():
                 "humidity": 72
             }
 
-        # ---------------------------
-        # Irriframe Recommendation
-        # ---------------------------
-        irriframe = get_irriframe_data(
-            ttn.get("soil_moisture", 45)
-        )
+        irriframe = get_irriframe_data(ttn.get("soil_moisture", 45))
 
-        # ---------------------------
-        # Irrigation Decision
-        # ---------------------------
         decision = irrigation_decision(
             ttn.get("soil_moisture", 45),
             weather
         )
 
-        # ---------------------------
-        # WUE Calculation
-        # ---------------------------
-        yield_value = 2500
-
-        irrigation_water = flow.get("flow_rate", 18)
-
-        rainfall = weather.get("rainfall", 5)
-
         wue = calculate_wue(
-            yield_value,
-            irrigation_water,
-            rainfall
+            2500,
+            flow.get("flow_rate", 18),
+            weather.get("rainfall", 5)
         )
 
-        # ---------------------------
-        # Novelty Engine
-        # ---------------------------
         novelty = smart_novelty_system(
             ttn.get("soil_moisture", 45),
             weather.get("rainfall", 5),
             weather.get("temperature", 31)
         )
 
-        # ---------------------------
-        # Generate Graph & Table
-        # ---------------------------
         generate_irrigation_graph()
         generate_project_table()
 
-        # ---------------------------
-        # Final JSON Output
-        # ---------------------------
         return jsonify({
-
             "status": "Success",
-
             "ttn": ttn,
             "flow": flow,
             "weather": weather,
-
             "irriframe": irriframe,
-
             "decision": decision,
-
             "water_use_efficiency": wue,
-
             "novelty": novelty,
-
-            "graph":
-            "http://127.0.0.1:5000/static/live_graph.png",
-
-            "table":
-            "http://127.0.0.1:5000/static/project_table.png",
-
-            "time":
-            str(datetime.datetime.now())
-
+            "graph": f"{BASE_URL}/static/live_graph.png",
+            "table": f"{BASE_URL}/static/project_table.png",
+            "time": str(datetime.datetime.now())
         })
 
     except Exception as e:
-
-        print("Backend Error:", e)
-
         return jsonify({
-
             "status": "Error",
-
             "message": str(e)
-
         })
 
 
 @app.route("/graph")
 def graph():
-
     generate_irrigation_graph()
-
     return jsonify({
-
-        "graph":
-        "http://127.0.0.1:5000/static/live_graph.png"
-
+        "graph": f"{BASE_URL}/static/live_graph.png"
     })
 
 
 @app.route("/table")
 def table():
-
     generate_project_table()
-
     return jsonify({
-
-        "table":
-        "http://127.0.0.1:5000/static/project_table.png"
-
+        "table": f"{BASE_URL}/static/project_table.png"
     })
 
 
 @app.route("/novelty")
 def novelty():
-
     result = smart_novelty_system(45, 5, 30)
-
     return jsonify(result)
 
 
