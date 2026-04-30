@@ -1,120 +1,61 @@
-import React,{useState} from "react";
-import {useNavigate} from "react-router-dom";
-import "./App.css";
+import React, { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import "./Auth.css";
 
-function Signup(){
+function Signup() {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
-const navigate = useNavigate()
+  const navigate = useNavigate();
 
-const [role,setRole] = useState("user")
-const [username,setUsername] = useState("")
-const [email,setEmail] = useState("")
-const [password,setPassword] = useState("")
-const [confirm,setConfirm] = useState("")
+  const signupUser = async () => {
+    const res = await fetch(
+      `http://127.0.0.1:5000/signup/${name}/${email}/${password}`
+    );
 
-const handleSignup = (e) => {
+    const data = await res.json();
 
-e.preventDefault()
+    if (data.status === "Success") {
+      alert("Signup Successful");
+      navigate("/");
+    } else {
+      alert(data.message);
+    }
+  };
 
-if(username.length < 3){
-alert("Username must be 3 characters")
-return
-}
+  return (
+    <div className="auth-page">
+      <div className="auth-card">
+        <h1>🌿 Smart Irrigation</h1>
+        <h2>Signup</h2>
 
-if(!email.includes("@")){
-alert("Invalid Email")
-return
-}
+        <input
+          type="text"
+          placeholder="Full Name"
+          onChange={(e) => setName(e.target.value)}
+        />
 
-if(password.length < 5){
-alert("Password must be 5 characters")
-return
-}
+        <input
+          type="email"
+          placeholder="Email"
+          onChange={(e) => setEmail(e.target.value)}
+        />
 
-if(password !== confirm){
-alert("Password not matching")
-return
-}
+        <input
+          type="password"
+          placeholder="Password"
+          onChange={(e) => setPassword(e.target.value)}
+        />
 
-const user = {
-role,
-username,
-email,
-password
-}
+        <button onClick={signupUser}>Create Account</button>
 
-localStorage.setItem("user",JSON.stringify(user))
-
-alert("Account Created Successfully")
-
-navigate("/")
-
-}
-
-return(
-
-<div className="login-container">
-
-<div className="login-box">
-
-<h1>Create Account</h1>
-
-<form onSubmit={handleSignup}>
-
-<select
-value={role}
-onChange={(e)=>setRole(e.target.value)}
->
-
-<option value="user">User</option>
-<option value="admin">Admin</option>
-
-</select>
-
-<input
-type="text"
-placeholder="Username"
-value={username}
-onChange={(e)=>setUsername(e.target.value)}
-required
-/>
-
-<input
-type="email"
-placeholder="Email"
-value={email}
-onChange={(e)=>setEmail(e.target.value)}
-required
-/>
-
-<input
-type="password"
-placeholder="Password"
-value={password}
-onChange={(e)=>setPassword(e.target.value)}
-required
-/>
-
-<input
-type="password"
-placeholder="Confirm Password"
-value={confirm}
-onChange={(e)=>setConfirm(e.target.value)}
-required
-/>
-
-<button type="submit">
-Create Account
-</button>
-
-</form>
-
-</div>
-
-</div>
-
-)
-
+        <p>
+          Already have account? <Link to="/">Login</Link>
+        </p>
+      </div>
+    </div>
+  );
 }
 
 export default Signup;

@@ -1,97 +1,51 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import "./App.css";
+import { useNavigate, Link } from "react-router-dom";
+import "./Auth.css";
 
-function Login(){
+function Login() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const navigate = useNavigate();
 
-const navigate = useNavigate();
+  const loginUser = async () => {
+    const res = await fetch(
+      `http://127.0.0.1:5000/login/${email}/${password}`
+    );
+    const data = await res.json();
 
-const [role,setRole] = useState("user")
-const [username,setUsername] = useState("")
-const [password,setPassword] = useState("")
+    if (data.status === "Success") {
+      navigate("/dashboard");
+    } else {
+      alert("Invalid Login");
+    }
+  };
 
-const handleLogin = (e) => {
+  return (
+    <div className="auth-page">
+      <div className="auth-card">
+        <h1>🌿 Smart Irrigation</h1>
+        <h2>Login</h2>
 
-e.preventDefault()
+        <input
+          type="email"
+          placeholder="Email"
+          onChange={(e) => setEmail(e.target.value)}
+        />
 
-const savedUser = JSON.parse(localStorage.getItem("user"))
+        <input
+          type="password"
+          placeholder="Password"
+          onChange={(e) => setPassword(e.target.value)}
+        />
 
-if(!savedUser){
-alert("Please create account first")
-return
-}
+        <button onClick={loginUser}>Login</button>
 
-if(
-username === savedUser.username &&
-password === savedUser.password &&
-role === savedUser.role
-){
-navigate("/dashboard")
-}
-else{
-alert("Invalid Credentials")
-}
-
-}
-
-return(
-
-<div className="login-container">
-
-<div className="login-box">
-
-<h1>Smart Irrigation Login</h1>
-
-<form onSubmit={handleLogin}>
-
-<select
-value={role}
-onChange={(e)=>setRole(e.target.value)}
->
-
-<option value="user">User</option>
-<option value="admin">Admin</option>
-
-</select>
-
-<input
-type="text"
-placeholder="Username"
-value={username}
-onChange={(e)=>setUsername(e.target.value)}
-required
-/>
-
-<input
-type="password"
-placeholder="Password"
-value={password}
-onChange={(e)=>setPassword(e.target.value)}
-required
-/>
-
-<button type="submit">
-Login
-</button>
-
-</form>
-
-<p>
-
-Don't have account ?
-
-<button onClick={()=>navigate("/signup")}>
-Sign Up
-</button>
-
-</p>
-
-</div>
-
-</div>
-
-)
-
+        <p>
+          New user? <Link to="/signup">Create Account</Link>
+        </p>
+      </div>
+    </div>
+  );
 }
 
 export default Login;

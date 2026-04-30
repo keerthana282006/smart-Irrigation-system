@@ -1,35 +1,28 @@
-import React, {useEffect,useState} from "react"
-import axios from "axios"
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 
-function Weather(){
+function Weather() {
+  const [data, setData] = useState(null);
 
-const [data,setData] = useState(null)
+  useEffect(() => {
+    axios.get("http://127.0.0.1:5000/data")
+      .then(res => setData(res.data))
+      .catch(err => console.log(err));
+  }, []);
 
-useEffect(()=>{
+  if (!data) {
+    return <h3>Loading Weather...</h3>;
+  }
 
-axios.get("https://smart-irrigation-system-3-ny8u.onrender.com/weather")
-.then(res=>setData(res.data))
-.catch(err=>console.log(err))
+  return (
+    <div className="container mt-5">
+      <h2>🌤 Weather Module</h2>
 
-},[])
-
-if(!data){
-return <h3>Loading Weather...</h3>
-}
-
-return(
-
-<div className="container mt-5">
-
-<h2>🌤 Weather Module</h2>
-
-<p>Temperature : {data.weather?.temperature || "--"} °C</p>
-<p>Wind : {data.weather?.wind || "--"} km/h</p>
-
-</div>
-
-)
-
+      <p>Temperature: {data.weather?.temperature || "--"} °C</p>
+      <p>Humidity: {data.weather?.humidity || "--"} %</p>
+      <p>Rainfall: {data.weather?.rainfall || "--"} mm</p>
+    </div>
+  );
 }
 
 export default Weather;
