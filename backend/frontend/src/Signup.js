@@ -10,17 +10,26 @@ function Signup() {
   const navigate = useNavigate();
 
   const signupUser = async () => {
-    const res = await fetch(
-      `http://127.0.0.1:5000/signup/${name}/${email}/${password}`
-    );
+    try {
+      const res = await fetch("http://127.0.0.1:5000/signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ name, email, password }),
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    if (data.status === "Success") {
-      alert("Signup Successful");
-      navigate("/");
-    } else {
-      alert(data.message);
+      if (data.status === "Success") {
+        alert("Signup Successful");
+        navigate("/");
+      } else {
+        alert(data.message);
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Backend not reachable");
     }
   };
 

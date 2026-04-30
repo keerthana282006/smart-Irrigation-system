@@ -9,16 +9,20 @@ function Login() {
 
   const loginUser = async () => {
     try {
-      const res = await fetch(
-        `https://your-backend-url.onrender.com/login/${email}/${password}`
-      );
+      const res = await fetch("http://127.0.0.1:5000/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
 
       const data = await res.json();
 
-      if (data && data.status === "Success") {
-        navigate("/dashboard"); // redirect works
+      if (data.status === "Success") {
+        navigate("/dashboard");
       } else {
-        alert("Invalid Login");
+        alert(data.message);
       }
     } catch (error) {
       console.error(error);
