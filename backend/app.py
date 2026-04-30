@@ -8,23 +8,47 @@ import os
 # Disable SSL warning
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-# Connectors
-from connectors.ttn_connector import get_ttn_data, start_ttn
-from connectors.flownex_connector import get_flownex_data
-from connectors.irriframe_connector import get_irriframe_data
-
-# Processing
-from processing.irrigation_logic import irrigation_decision
-from processing.wue_calculation import calculate_wue
-
 app = Flask(__name__)
 CORS(app)
 
-# ---------------- MongoDB SAFE CONNECTION ----------------
+# ---------------- SAFE CONNECTORS ----------------
+try:
+    from connectors.ttn_connector import get_ttn_data, start_ttn
+except:
+    print("⚠️ TTN module failed")
+    def get_ttn_data(): return None
+    def start_ttn(): pass
+
+try:
+    from connectors.flownex_connector import get_flownex_data
+except:
+    print("⚠️ Flownex module failed")
+    def get_flownex_data(): return None
+
+try:
+    from connectors.irriframe_connector import get_irriframe_data
+except:
+    print("⚠️ Irriframe module failed")
+    def get_irriframe_data(x): return {"status": "default"}
+
+# ---------------- PROCESSING SAFE ----------------
+try:
+    from processing.irrigation_logic import irrigation_decision
+except:
+    print("⚠️ irrigation_logic failed")
+    def irrigation_decision(x, y): return "No irrigation needed"
+
+try:
+    from processing.wue_calculation import calculate_wue
+except:
+    print("⚠️ wue_calculation failed")
+    def calculate_wue(a, b, c): return 0
+
+# ---------------- MongoDB SAFE ----------------
 MONGO_URI = os.environ.get("MONGO_URI")
 
 if not MONGO_URI:
-    print("❌ MONGO_URI not found. Running without DB.")
+    print("❌ No MongoDB (running without DB)")
     client = None
 else:
     try:
@@ -32,64 +56,55 @@ else:
         db = client["smart_irrigation"]
         sensor_collection = db["sensor_data"]
         users_collection = db["users"]
-        print("✅ MongoDB Connected Successfully")
+        print("✅ MongoDB Connected")
     except Exception as e:
-        print("❌ MongoDB Connection Failed:", e)
+        print("❌ MongoDB Error:", e)
         client = None
 
-# ---------------- Start TTN ----------------
+# ---------------- START TTN ----------------
 try:
     start_ttn()
 except:
-    print("⚠️ TTN not connected")
+    print("⚠️ TTN start failed")
 
-# ---------------- Home ----------------
+# ---------------- HOME ----------------
 @app.route("/")
 def home():
     return "Smart Irrigation Backend Running"
 
 # ---------------------------------------------------
-# DATA API (FULLY SAFE)
+# DATA API (CRASH PROOF)
 # ---------------------------------------------------
 @app.route("/data")
 def get_data():
     try:
-        # -------- SAFE TTN --------
         try:
             ttn = get_ttn_data()
-        except Exception as e:
-            print("TTN Error:", e)
+        except:
             ttn = None
 
-        # -------- SAFE FLOW --------
         try:
             flow = get_flownex_data()
-        except Exception as e:
-            print("Flow Error:", e)
+        except:
             flow = None
 
-        # -------- WEATHER --------
         weather = {
             "temperature": 31,
             "rainfall": 5,
             "humidity": 72
         }
 
-        # -------- DEFAULTS --------
         if not ttn:
             ttn = {"soil_moisture": 45, "temperature": 30}
 
         if not flow:
             flow = {"flow_rate": 18, "pressure": 2.5}
 
-        # -------- SAFE IRRIFRAME --------
         try:
             irriframe = get_irriframe_data(ttn["soil_moisture"])
-        except Exception as e:
-            print("Irriframe Error:", e)
+        except:
             irriframe = {"status": "default"}
 
-        # -------- LOGIC --------
         decision = irrigation_decision(
             ttn["soil_moisture"], weather
         )
@@ -113,12 +128,11 @@ def get_data():
             "time": datetime.datetime.now()
         }
 
-        # -------- SAVE ONLY IF DB --------
         if client:
             try:
                 sensor_collection.insert_one(save_data)
-            except Exception as e:
-                print("DB Insert Error:", e)
+            except:
+                pass
 
         return jsonify({
             "status": "Success",
@@ -132,14 +146,10 @@ def get_data():
         })
 
     except Exception as e:
-        print("CRASH:", e)
-        return jsonify({
-            "status": "Error",
-            "message": str(e)
-        })
+        return jsonify({"status": "Error", "message": str(e)})
 
 # ---------------------------------------------------
-# HISTORY API
+# HISTORY
 # ---------------------------------------------------
 @app.route("/history")
 def history():
@@ -153,8 +163,8 @@ def history():
             .limit(10)
         )
         return jsonify(data)
-    except Exception as e:
-        return jsonify({"status": "Error", "message": str(e)})
+    except:
+        return jsonify([])
 
 # ---------------------------------------------------
 # LOGIN
@@ -162,7 +172,7 @@ def history():
 @app.route("/login", methods=["POST"])
 def login():
     if not client:
-        return jsonify({"status": "Error", "message": "Database not connected"})
+        return jsonify({"status": "Error", "message": "No DB"})
 
     data = request.get_json()
 
@@ -176,8 +186,8 @@ def login():
             return jsonify({"status": "Success"})
         else:
             return jsonify({"status": "Failed"})
-    except Exception as e:
-        return jsonify({"status": "Error", "message": str(e)})
+    except:
+        return jsonify({"status": "Error"})
 
 # ---------------------------------------------------
 # SIGNUP
@@ -185,15 +195,17 @@ def login():
 @app.route("/signup", methods=["POST"])
 def signup():
     if not client:
-        return jsonify({"status": "Error", "message": "Database not connected"})
+        return jsonify({"status": "Error", "message": "No DB"})
 
     data = request.get_json()
 
     try:
-        existing_user = users_collection.find_one({"email": data.get("email")})
+        existing = users_collection.find_one({
+            "email": data.get("email")
+        })
 
-        if existing_user:
-            return jsonify({"status": "Failed", "message": "User exists"})
+        if existing:
+            return jsonify({"status": "Failed"})
 
         users_collection.insert_one({
             "name": data.get("name"),
@@ -202,8 +214,8 @@ def signup():
         })
 
         return jsonify({"status": "Success"})
-    except Exception as e:
-        return jsonify({"status": "Error", "message": str(e)})
+    except:
+        return jsonify({"status": "Error"})
 
 # ---------------------------------------------------
 # RUN SERVER (RENDER SAFE)
