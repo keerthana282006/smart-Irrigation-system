@@ -3,7 +3,6 @@ import "./App.css";
 
 function Prediction() {
   const [soil, setSoil] = useState("");
-  const [temp, setTemp] = useState(""); // FIXED
   const [rain, setRain] = useState("");
   const [flow, setFlow] = useState("");
 
@@ -35,11 +34,6 @@ function Prediction() {
         <input
           placeholder="Soil Moisture (%)"
           onChange={(e) => setSoil(e.target.value)}
-        />
-
-        <input
-          placeholder="Temperature (°C)"
-          onChange={(e) => setTemp(e.target.value)} // FIXED
         />
 
         <input

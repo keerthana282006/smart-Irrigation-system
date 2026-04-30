@@ -2,7 +2,6 @@ import React, { useState } from "react";
 
 function Decision() {
   const [soil, setSoil] = useState("");
-  const [temp, setTemp] = useState(""); // FIXED
   const [result, setResult] = useState("");
 
   const decide = () => {
@@ -20,11 +19,6 @@ function Decision() {
       <input
         placeholder="Soil Moisture"
         onChange={(e) => setSoil(e.target.value)}
-      />
-
-      <input
-        placeholder="Temperature"
-        onChange={(e) => setTemp(e.target.value)} // now works
       />
 
       <button onClick={decide}>Get Decision</button>
