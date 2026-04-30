@@ -2,13 +2,12 @@ import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import "./Auth.css";
 
+const API_URL = "https://smart-irrigation-system-3-ny8u.onrender.com";
+
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
   const navigate = useNavigate();
-
-  const API_URL = process.env.REACT_APP_API_URL;
 
   const loginUser = async () => {
     try {
@@ -25,7 +24,7 @@ function Login() {
       if (data.status === "Success") {
         navigate("/dashboard");
       } else {
-        alert(data.message);
+        alert("Invalid Login");
       }
     } catch (error) {
       console.error(error);

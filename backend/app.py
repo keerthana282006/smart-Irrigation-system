@@ -18,18 +18,24 @@ from processing.irrigation_logic import irrigation_decision
 from processing.wue_calculation import calculate_wue
 
 app = Flask(__name__)
-CORS(app, origins="*")  # allow frontend
+CORS(app)
 
-# ---------------- MongoDB (FIXED) ----------------
+# ---------------- MongoDB SAFE CONNECTION ----------------
 MONGO_URI = os.environ.get("MONGO_URI")
 
-client = MongoClient(MONGO_URI)
-db = client["smart_irrigation"]
-
-sensor_collection = db["sensor_data"]
-users_collection = db["users"]
-
-print("✅ MongoDB Connected Successfully")
+if not MONGO_URI:
+    print("❌ MONGO_URI not found. Running without DB.")
+    client = None
+else:
+    try:
+        client = MongoClient(MONGO_URI)
+        db = client["smart_irrigation"]
+        sensor_collection = db["sensor_data"]
+        users_collection = db["users"]
+        print("✅ MongoDB Connected Successfully")
+    except Exception as e:
+        print("❌ MongoDB Connection Failed:", e)
+        client = None
 
 # ---------------- Start TTN ----------------
 try:
@@ -88,7 +94,9 @@ def get_data():
             "time": datetime.datetime.now()
         }
 
-        sensor_collection.insert_one(save_data)
+        # Save only if DB available
+        if client:
+            sensor_collection.insert_one(save_data)
 
         return jsonify({
             "status": "Success",
@@ -112,11 +120,15 @@ def get_data():
 # ---------------------------------------------------
 @app.route("/history")
 def history():
+    if not client:
+        return jsonify([])
+
     data = list(
         sensor_collection.find({}, {"_id": 0})
         .sort("time", -1)
         .limit(10)
     )
+
     return jsonify(data)
 
 # ---------------------------------------------------
@@ -124,57 +136,45 @@ def history():
 # ---------------------------------------------------
 @app.route("/login", methods=["POST"])
 def login():
+    if not client:
+        return jsonify({"status": "Error", "message": "Database not connected"})
+
     data = request.get_json()
 
-    email = data.get("email")
-    password = data.get("password")
-
     user = users_collection.find_one({
-        "email": email,
-        "password": password
+        "email": data.get("email"),
+        "password": data.get("password")
     })
 
     if user:
-        return jsonify({
-            "status": "Success",
-            "message": "Login Successful"
-        })
+        return jsonify({"status": "Success"})
     else:
-        return jsonify({
-            "status": "Failed",
-            "message": "Invalid Login"
-        })
+        return jsonify({"status": "Failed"})
 
 # ---------------------------------------------------
 # SIGNUP
 # ---------------------------------------------------
 @app.route("/signup", methods=["POST"])
 def signup():
+    if not client:
+        return jsonify({"status": "Error", "message": "Database not connected"})
+
     data = request.get_json()
 
-    name = data.get("name")
-    email = data.get("email")
-    password = data.get("password")
-
-    existing_user = users_collection.find_one({"email": email})
+    existing_user = users_collection.find_one({"email": data.get("email")})
 
     if existing_user:
-        return jsonify({
-            "status": "Failed",
-            "message": "User already exists"
-        })
+        return jsonify({"status": "Failed", "message": "User exists"})
 
     users_collection.insert_one({
-        "name": name,
-        "email": email,
-        "password": password
+        "name": data.get("name"),
+        "email": data.get("email"),
+        "password": data.get("password")
     })
 
-    return jsonify({
-        "status": "Success",
-        "message": "Signup successful"
-    })
+    return jsonify({"status": "Success"})
 
 # ---------------------------------------------------
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)

@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import "./Auth.css";
 
+const API_URL = "https://smart-irrigation-system-3-ny8u.onrender.com";
+
 function Signup() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -9,29 +11,22 @@ function Signup() {
 
   const navigate = useNavigate();
 
-  const API_URL = process.env.REACT_APP_API_URL;
-
   const signupUser = async () => {
-    try {
-      const res = await fetch(`${API_URL}/signup`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ name, email, password }),
-      });
+    const res = await fetch(`${API_URL}/signup`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ name, email, password }),
+    });
 
-      const data = await res.json();
+    const data = await res.json();
 
-      if (data.status === "Success") {
-        alert("Signup Successful");
-        navigate("/");
-      } else {
-        alert(data.message);
-      }
-    } catch (error) {
-      console.error(error);
-      alert("Backend not reachable");
+    if (data.status === "Success") {
+      alert("Signup Successful");
+      navigate("/");
+    } else {
+      alert(data.message);
     }
   };
 
