@@ -56,18 +56,21 @@ def get_data():
             "time": str(datetime.datetime.now())
         }
 
-        # SAVE ONLY IF DB EXISTS (FIXED)
-        if sensor_collection is not None:
-            try:
+        # ✅ SAFE DB INSERT
+        try:
+            if sensor_collection is not None:
                 sensor_collection.insert_one(data)
-            except Exception as e:
-                print("DB INSERT ERROR:", e)
+        except Exception as db_error:
+            print("DB ERROR:", db_error)
 
         return jsonify(data)
 
     except Exception as e:
         print("DATA ERROR:", e)
-        return jsonify({"status": "Error", "message": str(e)})
+        return jsonify({
+            "status": "Error",
+            "message": str(e)
+        })
 
 # ---------------- HISTORY ----------------
 @app.route("/history")
