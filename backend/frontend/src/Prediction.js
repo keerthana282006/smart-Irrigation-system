@@ -4,7 +4,6 @@ import "./App.css";
 function Prediction(){
 
 const [soil,setSoil] = useState("")
-const [temp,setTemp] = useState("")
 const [rain,setRain] = useState("")
 const [flow,setFlow] = useState("")
 
