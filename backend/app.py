@@ -6,7 +6,7 @@ import datetime
 app = Flask(__name__)
 CORS(app)
 
-# ---------------- OPTIONAL MONGODB ----------------
+# ---------------- MONGODB SETUP ----------------
 client = None
 users_collection = None
 sensor_collection = None
@@ -19,8 +19,10 @@ try:
     if MONGO_URI:
         client = MongoClient(MONGO_URI)
         db = client["smart_irrigation"]
+
         users_collection = db["users"]
         sensor_collection = db["sensor_data"]
+
         print("✅ MongoDB Connected")
     else:
         print("⚠️ No MongoDB URI found")
@@ -28,7 +30,7 @@ try:
 except Exception as e:
     print("❌ MongoDB Error:", e)
 
-# ---------------- TEMP STORAGE (fallback) ----------------
+# ---------------- FALLBACK STORAGE ----------------
 users = []
 
 # ---------------- HOME ----------------
@@ -54,18 +56,36 @@ def get_data():
             "time": str(datetime.datetime.now())
         }
 
-        # Save to MongoDB if available
-        if sensor_collection:
+        # SAVE ONLY IF DB EXISTS (FIXED)
+        if sensor_collection is not None:
             try:
                 sensor_collection.insert_one(data)
-            except:
-                pass
+            except Exception as e:
+                print("DB INSERT ERROR:", e)
 
         return jsonify(data)
 
     except Exception as e:
         print("DATA ERROR:", e)
         return jsonify({"status": "Error", "message": str(e)})
+
+# ---------------- HISTORY ----------------
+@app.route("/history")
+def history():
+    try:
+        if sensor_collection is not None:
+            data = list(
+                sensor_collection.find({}, {"_id": 0})
+                .sort("time", -1)
+                .limit(10)
+            )
+            return jsonify(data)
+
+        return jsonify([])
+
+    except Exception as e:
+        print("HISTORY ERROR:", e)
+        return jsonify([])
 
 # ---------------- LOGIN ----------------
 @app.route("/login", methods=["POST"])
@@ -79,8 +99,8 @@ def login():
         email = data.get("email")
         password = data.get("password")
 
-        # MongoDB login
-        if users_collection:
+        # MONGODB LOGIN (FIXED)
+        if users_collection is not None:
             user = users_collection.find_one({
                 "email": email,
                 "password": password
@@ -91,7 +111,7 @@ def login():
             else:
                 return jsonify({"status": "Failed"})
 
-        # Fallback login
+        # FALLBACK LOGIN
         for user in users:
             if user["email"] == email and user["password"] == password:
                 return jsonify({"status": "Success"})
@@ -115,8 +135,8 @@ def signup():
         email = data.get("email")
         password = data.get("password")
 
-        # MongoDB signup
-        if users_collection:
+        # MONGODB SIGNUP (FIXED)
+        if users_collection is not None:
             existing = users_collection.find_one({"email": email})
 
             if existing:
@@ -130,7 +150,7 @@ def signup():
 
             return jsonify({"status": "Success"})
 
-        # Fallback signup
+        # FALLBACK SIGNUP
         for user in users:
             if user["email"] == email:
                 return jsonify({"status": "Failed"})
@@ -146,26 +166,3 @@ def signup():
     except Exception as e:
         print("SIGNUP ERROR:", e)
         return jsonify({"status": "Error", "message": str(e)})
-
-# ---------------- HISTORY ----------------
-@app.route("/history")
-def history():
-    try:
-        if sensor_collection:
-            data = list(
-                sensor_collection.find({}, {"_id": 0})
-                .sort("time", -1)
-                .limit(10)
-            )
-            return jsonify(data)
-
-        return jsonify([])
-
-    except Exception as e:
-        print("HISTORY ERROR:", e)
-        return jsonify([])
-
-# ---------------- RUN ----------------
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
