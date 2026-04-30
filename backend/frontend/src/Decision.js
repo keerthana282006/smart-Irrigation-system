@@ -3,7 +3,7 @@ import React,{useState} from "react";
 function Decision(){
 
 const [soil,setSoil]=useState("")
-const [temp,setTemp]=useState("")
+
 const [result,setResult]=useState("")
 
 const decide=()=>{
