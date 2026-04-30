@@ -49,28 +49,47 @@ def home():
     return "Smart Irrigation Backend Running"
 
 # ---------------------------------------------------
-# DATA API
+# DATA API (FULLY SAFE)
 # ---------------------------------------------------
 @app.route("/data")
 def get_data():
     try:
-        ttn = get_ttn_data()
-        flow = get_flownex_data()
+        # -------- SAFE TTN --------
+        try:
+            ttn = get_ttn_data()
+        except Exception as e:
+            print("TTN Error:", e)
+            ttn = None
 
+        # -------- SAFE FLOW --------
+        try:
+            flow = get_flownex_data()
+        except Exception as e:
+            print("Flow Error:", e)
+            flow = None
+
+        # -------- WEATHER --------
         weather = {
             "temperature": 31,
             "rainfall": 5,
             "humidity": 72
         }
 
+        # -------- DEFAULTS --------
         if not ttn:
             ttn = {"soil_moisture": 45, "temperature": 30}
 
         if not flow:
             flow = {"flow_rate": 18, "pressure": 2.5}
 
-        irriframe = get_irriframe_data(ttn["soil_moisture"])
+        # -------- SAFE IRRIFRAME --------
+        try:
+            irriframe = get_irriframe_data(ttn["soil_moisture"])
+        except Exception as e:
+            print("Irriframe Error:", e)
+            irriframe = {"status": "default"}
 
+        # -------- LOGIC --------
         decision = irrigation_decision(
             ttn["soil_moisture"], weather
         )
@@ -94,9 +113,12 @@ def get_data():
             "time": datetime.datetime.now()
         }
 
-        # Save only if DB available
+        # -------- SAVE ONLY IF DB --------
         if client:
-            sensor_collection.insert_one(save_data)
+            try:
+                sensor_collection.insert_one(save_data)
+            except Exception as e:
+                print("DB Insert Error:", e)
 
         return jsonify({
             "status": "Success",
@@ -110,6 +132,7 @@ def get_data():
         })
 
     except Exception as e:
+        print("CRASH:", e)
         return jsonify({
             "status": "Error",
             "message": str(e)
@@ -123,13 +146,15 @@ def history():
     if not client:
         return jsonify([])
 
-    data = list(
-        sensor_collection.find({}, {"_id": 0})
-        .sort("time", -1)
-        .limit(10)
-    )
-
-    return jsonify(data)
+    try:
+        data = list(
+            sensor_collection.find({}, {"_id": 0})
+            .sort("time", -1)
+            .limit(10)
+        )
+        return jsonify(data)
+    except Exception as e:
+        return jsonify({"status": "Error", "message": str(e)})
 
 # ---------------------------------------------------
 # LOGIN
@@ -141,15 +166,18 @@ def login():
 
     data = request.get_json()
 
-    user = users_collection.find_one({
-        "email": data.get("email"),
-        "password": data.get("password")
-    })
+    try:
+        user = users_collection.find_one({
+            "email": data.get("email"),
+            "password": data.get("password")
+        })
 
-    if user:
-        return jsonify({"status": "Success"})
-    else:
-        return jsonify({"status": "Failed"})
+        if user:
+            return jsonify({"status": "Success"})
+        else:
+            return jsonify({"status": "Failed"})
+    except Exception as e:
+        return jsonify({"status": "Error", "message": str(e)})
 
 # ---------------------------------------------------
 # SIGNUP
@@ -161,19 +189,24 @@ def signup():
 
     data = request.get_json()
 
-    existing_user = users_collection.find_one({"email": data.get("email")})
+    try:
+        existing_user = users_collection.find_one({"email": data.get("email")})
 
-    if existing_user:
-        return jsonify({"status": "Failed", "message": "User exists"})
+        if existing_user:
+            return jsonify({"status": "Failed", "message": "User exists"})
 
-    users_collection.insert_one({
-        "name": data.get("name"),
-        "email": data.get("email"),
-        "password": data.get("password")
-    })
+        users_collection.insert_one({
+            "name": data.get("name"),
+            "email": data.get("email"),
+            "password": data.get("password")
+        })
 
-    return jsonify({"status": "Success"})
+        return jsonify({"status": "Success"})
+    except Exception as e:
+        return jsonify({"status": "Error", "message": str(e)})
 
+# ---------------------------------------------------
+# RUN SERVER (RENDER SAFE)
 # ---------------------------------------------------
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
