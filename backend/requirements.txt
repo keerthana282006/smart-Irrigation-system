@@ -1,9 +1,4 @@
-Flask
+flask
 flask-cors
-pymongo
-requests
 gunicorn
-matplotlib
-numpy
-pandas
-urllib3
+pymongo
