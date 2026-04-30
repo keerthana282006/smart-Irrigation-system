@@ -9,9 +9,11 @@ function Signup() {
 
   const navigate = useNavigate();
 
+  const API_URL = process.env.REACT_APP_API_URL;
+
   const signupUser = async () => {
     try {
-      const res = await fetch("http://127.0.0.1:5000/signup", {
+      const res = await fetch(`${API_URL}/signup`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

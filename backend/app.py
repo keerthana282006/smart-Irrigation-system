@@ -3,6 +3,7 @@ from flask_cors import CORS
 import datetime
 import urllib3
 from pymongo import MongoClient
+import os
 
 # Disable SSL warning
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -17,11 +18,14 @@ from processing.irrigation_logic import irrigation_decision
 from processing.wue_calculation import calculate_wue
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, origins="*")  # allow frontend
 
-# ---------------- MongoDB ----------------
-client = MongoClient("mongodb://127.0.0.1:27017/")
+# ---------------- MongoDB (FIXED) ----------------
+MONGO_URI = os.environ.get("MONGO_URI")
+
+client = MongoClient(MONGO_URI)
 db = client["smart_irrigation"]
+
 sensor_collection = db["sensor_data"]
 users_collection = db["users"]
 
@@ -116,7 +120,7 @@ def history():
     return jsonify(data)
 
 # ---------------------------------------------------
-# LOGIN (POST)
+# LOGIN
 # ---------------------------------------------------
 @app.route("/login", methods=["POST"])
 def login():
@@ -142,7 +146,7 @@ def login():
         })
 
 # ---------------------------------------------------
-# SIGNUP (POST)
+# SIGNUP
 # ---------------------------------------------------
 @app.route("/signup", methods=["POST"])
 def signup():

@@ -5,11 +5,14 @@ import "./Auth.css";
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
   const navigate = useNavigate();
+
+  const API_URL = process.env.REACT_APP_API_URL;
 
   const loginUser = async () => {
     try {
-      const res = await fetch("http://127.0.0.1:5000/login", {
+      const res = await fetch(`${API_URL}/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
