@@ -1,7 +1,9 @@
-flask
+Flask
 flask-cors
-gunicorn
+pymongo
 requests
-pandas
-numpy
+gunicorn
 matplotlib
+numpy
+pandas
+urllib3
