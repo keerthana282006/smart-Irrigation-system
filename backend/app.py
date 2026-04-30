@@ -31,7 +31,7 @@ except:
     print("⚠️ Irriframe module failed")
     def get_irriframe_data(x): return {"status": "default"}
 
-# ---------------- PROCESSING SAFE ----------------
+# ---------------- SAFE PROCESSING ----------------
 try:
     from processing.irrigation_logic import irrigation_decision
 except:
@@ -73,7 +73,7 @@ def home():
     return "Smart Irrigation Backend Running"
 
 # ---------------------------------------------------
-# DATA API (CRASH PROOF)
+# DATA API (FULL SAFE)
 # ---------------------------------------------------
 @app.route("/data")
 def get_data():
@@ -136,16 +136,17 @@ def get_data():
 
         return jsonify({
             "status": "Success",
-            "ttn": ttn,
-            "flow": flow,
+            "ttn": ttn or {},
+            "flow": flow or {},
             "weather": weather,
-            "irriframe": irriframe,
+            "irriframe": irriframe or {},
             "decision": decision,
             "water_use_efficiency": wue,
             "time": str(datetime.datetime.now())
         })
 
     except Exception as e:
+        print("DATA ERROR:", e)
         return jsonify({"status": "Error", "message": str(e)})
 
 # ---------------------------------------------------
@@ -153,17 +154,19 @@ def get_data():
 # ---------------------------------------------------
 @app.route("/history")
 def history():
-    if not client:
-        return jsonify([])
-
     try:
+        if not client:
+            return jsonify([])
+
         data = list(
             sensor_collection.find({}, {"_id": 0})
             .sort("time", -1)
             .limit(10)
         )
         return jsonify(data)
-    except:
+
+    except Exception as e:
+        print("HISTORY ERROR:", e)
         return jsonify([])
 
 # ---------------------------------------------------
@@ -171,51 +174,72 @@ def history():
 # ---------------------------------------------------
 @app.route("/login", methods=["POST"])
 def login():
-    if not client:
-        return jsonify({"status": "Error", "message": "No DB"})
-
-    data = request.get_json()
-
     try:
+        data = request.get_json()
+
+        if not data:
+            return jsonify({"status": "Error", "message": "No data received"})
+
+        if not client:
+            return jsonify({"status": "Error", "message": "Database not connected"})
+
+        email = data.get("email")
+        password = data.get("password")
+
+        if not email or not password:
+            return jsonify({"status": "Error", "message": "Missing fields"})
+
         user = users_collection.find_one({
-            "email": data.get("email"),
-            "password": data.get("password")
+            "email": email,
+            "password": password
         })
 
         if user:
             return jsonify({"status": "Success"})
         else:
             return jsonify({"status": "Failed"})
-    except:
-        return jsonify({"status": "Error"})
+
+    except Exception as e:
+        print("LOGIN ERROR:", e)
+        return jsonify({"status": "Error", "message": str(e)})
 
 # ---------------------------------------------------
 # SIGNUP
 # ---------------------------------------------------
 @app.route("/signup", methods=["POST"])
 def signup():
-    if not client:
-        return jsonify({"status": "Error", "message": "No DB"})
-
-    data = request.get_json()
-
     try:
-        existing = users_collection.find_one({
-            "email": data.get("email")
-        })
+        data = request.get_json()
+
+        if not data:
+            return jsonify({"status": "Error", "message": "No data received"})
+
+        if not client:
+            return jsonify({"status": "Error", "message": "Database not connected"})
+
+        name = data.get("name")
+        email = data.get("email")
+        password = data.get("password")
+
+        if not name or not email or not password:
+            return jsonify({"status": "Error", "message": "Missing fields"})
+
+        existing = users_collection.find_one({"email": email})
 
         if existing:
-            return jsonify({"status": "Failed"})
+            return jsonify({"status": "Failed", "message": "User exists"})
 
         users_collection.insert_one({
-            "name": data.get("name"),
-            "email": data.get("email"),
-            "password": data.get("password")
+            "name": name,
+            "email": email,
+            "password": password
         })
 
         return jsonify({"status": "Success"})
-    except:
-        return jsonify({"status": "Error"})
+
+    except Exception as e:
+        print("SIGNUP ERROR:", e)
+        return jsonify({"status": "Error", "message": str(e)})
 
 # ---------------------------------------------------
 # RUN SERVER (RENDER SAFE)
