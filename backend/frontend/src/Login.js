@@ -8,15 +8,21 @@ function Login() {
   const navigate = useNavigate();
 
   const loginUser = async () => {
-    const res = await fetch(
-      `http://127.0.0.1:5000/login/${email}/${password}`
-    );
-    const data = await res.json();
+    try {
+      const res = await fetch(
+        `https://your-backend-url.onrender.com/login/${email}/${password}`
+      );
 
-    if (data.status === "Success") {
-      navigate("/dashboard");
-    } else {
-      alert("Invalid Login");
+      const data = await res.json();
+
+      if (data && data.status === "Success") {
+        navigate("/dashboard"); // redirect works
+      } else {
+        alert("Invalid Login");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Backend not reachable");
     }
   };
 
