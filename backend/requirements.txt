@@ -1,4 +1,7 @@
-flask
+Flask
 flask-cors
-gunicorn
 pymongo
+werkzeug
+certifi
+urllib3
+gunicorn
