@@ -7,4 +7,5 @@ urllib3
 gunicorn
 requests
 pandas
+numpy
 matplotlib

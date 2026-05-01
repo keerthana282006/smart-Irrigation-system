@@ -10,7 +10,8 @@ import datetime
 from connectors.ttn_connector import get_ttn_data
 from connectors.flownex_connector import get_flownex_data
 from connectors.weather_connector import get_weather
-
+import matplotlib
+matplotlib.use("Agg")
 
 # Store live values
 dates = []
