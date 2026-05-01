@@ -2,33 +2,62 @@ import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import "./Auth.css";
 
-const API_URL = "https://smart-irrigation-system-3-ny8u.onrender.com";
+const API_URL = "http://localhost:5000";
 
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+
   const navigate = useNavigate();
 
   const loginUser = async () => {
+    // ✅ validation
+    if (!email.trim() || !password.trim()) {
+      alert("Please enter email and password");
+      return;
+    }
+
+    setLoading(true);
+
     try {
       const res = await fetch(`${API_URL}/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({
+          email: email.trim().toLowerCase(), // ✅ match signup format
+          password: password.trim(),
+        }),
       });
 
-      const data = await res.json();
+      // ✅ handle invalid JSON safely
+      let data;
+      try {
+        data = await res.json();
+      } catch {
+        throw new Error("Invalid server response");
+      }
 
-      if (data.status === "Success") {
+      console.log("Login Response:", data);
+
+      if (res.ok && data.status === "success") {
+        alert("Login Successful");
+
+        // ✅ store user info (optional but useful)
+        localStorage.setItem("user", JSON.stringify(data.user));
+
         navigate("/dashboard");
       } else {
-        alert("Invalid Login");
+        alert(data.message || "Invalid credentials");
       }
+
     } catch (error) {
-      console.error(error);
-      alert("Backend not reachable");
+      console.error("Login Error:", error);
+      alert("Backend not reachable or server error");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -41,16 +70,20 @@ function Login() {
         <input
           type="email"
           placeholder="Email"
+          value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
 
         <input
           type="password"
           placeholder="Password"
+          value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
 
-        <button onClick={loginUser}>Login</button>
+        <button onClick={loginUser} disabled={loading}>
+          {loading ? "Logging in..." : "Login"}
+        </button>
 
         <p>
           New user? <Link to="/signup">Create Account</Link>
