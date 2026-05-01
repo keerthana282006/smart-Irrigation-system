@@ -5,3 +5,4 @@ werkzeug
 certifi
 urllib3
 gunicorn
+requests
